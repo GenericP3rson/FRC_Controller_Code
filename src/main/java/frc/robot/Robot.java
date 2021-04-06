@@ -12,8 +12,8 @@ import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.GenericHID.Hand;
- 
- 
+import edu.wpi.first.cameraserver.CameraServer;
+
 public class Robot extends TimedRobot {
   private final PWMVictorSPX m_leftMotor = new PWMVictorSPX(0);
   private final PWMVictorSPX m_leftMotor1 = new PWMVictorSPX(3);
@@ -31,31 +31,33 @@ public class Robot extends TimedRobot {
   private final XboxController m_stick = new XboxController(0); // XboxController.Button
   private final Joystick movement = new Joystick(1);
   private final Timer m_timer = new Timer();
- 
- 
+
+  public double sigmoid(double val) {
+    return 1 / (1 + Math.exp(-(16*val-8)));
+  }
+
   @Override
-  public void autonomousInit() {
+  public void teleopInit() {
     m_timer.reset();
     m_timer.start();
   }
  
   @Override
   public void teleopPeriodic() {
-    m_robotDrive.arcadeDrive(movement.getY(), movement.getX());
+    CameraServer.getInstance().startAutomaticCapture();
+    m_robotDrive.arcadeDrive(movement.getY(), sigmoid(movement.getX()));
     flywheels.set(m_stick.getY(Hand.kLeft)*0.75);
-    intake.set(-m_stick.getTriggerAxis(Hand.kLeft));
-    elevator.set(-m_stick.getTriggerAxis(Hand.kRight));
 
     if (m_stick.getBumper(Hand.kLeft)) {
       intake.set(1.0);
     } else {
-      intake.set(0.0);
+      intake.set(-m_stick.getTriggerAxis(Hand.kLeft));
     }
 
     if (m_stick.getBumper(Hand.kRight)) {
       elevator.set(1.0);
     } else {
-      elevator.set(0.0);
+      elevator.set(-m_stick.getTriggerAxis(Hand.kRight));
     }
   }
 }
